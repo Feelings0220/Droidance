@@ -8,6 +8,10 @@ Record a notable change in `Unreleased` within the same pull request that implem
 
 ## [Unreleased]
 
+### Added
+
+- Dictate into the chat composer using Android speech recognition. Review or edit the transcript before sending.
+
 ## [0.3.0] - 2026-11-14
 
 - Add Shizuku as a connection option in setup and settings.
