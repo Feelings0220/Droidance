@@ -11,10 +11,13 @@ import com.droidance.ui.theme.AppIconSize
 import com.droidance.ui.theme.AppShapes
 import android.app.Activity
 import android.app.ActivityManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
+import android.speech.RecognizerIntent
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -331,6 +334,22 @@ internal fun ChatInputBar(
         }
         pendingCameraUri = null
     }
+    val voiceLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (!isEnabled || result.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
+        val transcript = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            ?.firstOrNull { it.isNotBlank() }?.trim()
+        if (transcript == null) {
+            onError(context.getString(R.string.composer_voice_empty))
+        } else {
+            editorState.edit {
+                val separator = if (length > 0 && asCharSequence().last() != '\n') "\n" else ""
+                append(separator + transcript)
+                selection = TextRange(length)
+            }
+        }
+    }
     val haptics = rememberAppHaptics()
     fun submitMessage() {
         if (!isEnabled ||
@@ -442,7 +461,7 @@ internal fun ChatInputBar(
                     ComposerSkillReferences(selectedSkills, isEnabled,
                         onOpen = { skillPreview = it },
                         onRemove = { reference -> selectedSkills = selectedSkills.filterNot { it.selectionKey == reference.selectionKey } })
-                    // Idle and empty: one row with attach, editor and send. Focus or content opens the
+                    // Idle and empty: one row with attach, editor, voice and send. Focus or content opens the
                     // full composer with the model controls; the editor keeps its slot either way.
                     val compact = !isInputFocused && !modelMenuOpen && inputText.isEmpty() && selectedSkills.isEmpty() &&
                         pendingImageUris.isEmpty()
@@ -623,6 +642,31 @@ internal fun ChatInputBar(
                             }
                         )
 
+                        IconButton(
+                            onClick = {
+                                keyboardActivationRequested = false
+                                keyboardFocusAuthorized = false
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                                dismissSkillPicker()
+                                showAttachments = false
+                                try {
+                                    voiceLauncher.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                    })
+                                } catch (_: ActivityNotFoundException) {
+                                    onError(context.getString(R.string.composer_voice_unavailable))
+                                }
+                            },
+                            enabled = isEnabled,
+                            modifier = Modifier.size(ComposerIconButtonSize)
+                        ) {
+                            Icon(
+                                DroidanceIcons.Microphone,
+                                contentDescription = stringResource(R.string.composer_voice_input),
+                                modifier = Modifier.size(AppIconSize.Action)
+                            )
+                        }
                         if (compact) sendButton()
                     }
 

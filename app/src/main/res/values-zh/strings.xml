@@ -103,6 +103,9 @@
     <string name="composer_input_hint">发送消息或任务</string>
     <string name="composer_attachment">附件</string>
     <string name="composer_send">发送</string>
+    <string name="composer_voice_input">使用安卓语音识别输入</string>
+    <string name="composer_voice_empty">未识别到语音，请重试。</string>
+    <string name="composer_voice_unavailable">这台设备没有可用的语音识别应用。</string>
     <string name="composer_choose_skill">技能</string>
     <string name="composer_skill_draft">草稿</string>
     <string name="composer_skill_hint">选择后添加到输入框，补充本次需求再发送。技能可以重复使用。</string>

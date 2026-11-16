@@ -103,6 +103,9 @@
     <string name="composer_input_hint">Send a message or task</string>
     <string name="composer_attachment">Attachment</string>
     <string name="composer_send">Send</string>
+    <string name="composer_voice_input">Dictate with Android speech recognition</string>
+    <string name="composer_voice_empty">No speech was recognized. Try again.</string>
+    <string name="composer_voice_unavailable">No speech recognition app is available.</string>
     <string name="composer_choose_skill">Skills</string>
     <string name="composer_skill_draft">Draft</string>
     <string name="composer_skill_hint">Add a skill to the composer, describe this request, then send. Skills can be reused.</string>
