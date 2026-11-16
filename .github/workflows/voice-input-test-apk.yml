@@ -1,0 +1,44 @@
+name: Voice input test APK
+
+on:
+  push:
+    branches: [test/voice-input-apk]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install the Android build tools
+        run: |
+          set +o pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973" > /dev/null
+      - name: Build, verify and name the test APK
+        run: |
+          ./gradlew :app:assembleDebug
+          apk=app/build/outputs/apk/debug/app-debug.apk
+          python3 scripts/verify_native.py "$apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$apk"
+          package=$("$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
+          test "$package" = com.droidance.debug
+          mkdir test-apk
+          cp "$apk" test-apk/droidance-voice-test.apk
+          cd test-apk
+          sha256sum droidance-voice-test.apk > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: droidance-voice-test
+          path: test-apk/
+          if-no-files-found: error
+          retention-days: 7
